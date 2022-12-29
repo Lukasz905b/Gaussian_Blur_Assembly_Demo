@@ -64,12 +64,12 @@
                     <ColumnDefinition Width="3*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Mask selection buttons -->
+                <!-- Mask selection textboxes -->
                 <StackPanel Grid.Column="0" Margin="10">
 
                     <TextBlock Text="Mask" FontWeight="Bold" IsEnabled="False" TextAlignment="Center" Padding="0 5" FontSize="14"/>
 
-                    <!-- 3x3 grid to hold the buttons -->
+                    <!-- 3x3 grid to hold the textboxes -->
                     <Grid>
 
                         <Grid.ColumnDefinitions>
@@ -84,17 +84,48 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <Button x:Name="MaskTopLeft" Margin="5" Padding="5" Grid.Column="0" Grid.Row="0" Content="10"/>
-                        <Button x:Name="MaskTopMiddle" Margin="5" Padding="5" Grid.Column="1" Grid.Row="0" Content="10"/>
-                        <Button x:Name="MaskTopRight" Margin="5" Padding="5" Grid.Column="2" Grid.Row="0" Content="10"/>
+                        
+                        <!-- Mask top row -->
+                        <TextBox x:Name="MaskTopLeft" Margin="5" Padding="5" Grid.Column="0" Grid.Row="0" 
+                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskCorner_KeyDown" LostFocus="MaskCorner_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
+                        
+                        <TextBox x:Name="MaskTopMiddle" Margin="5" Padding="5" Grid.Column="1" Grid.Row="0" 
+                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskSide_KeyDown" LostFocus="MaskSide_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
+                        
+                        <TextBox x:Name="MaskTopRight" Margin="5" Padding="5" Grid.Column="2" Grid.Row="0" 
+                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskCorner_KeyDown" LostFocus="MaskCorner_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
 
-                        <Button x:Name="MaskMiddleLeft" Margin="5" Padding="5" Grid.Column="0" Grid.Row="1" Content="10"/>
-                        <Button x:Name="MaskCenter" Margin="5" Padding="5" Grid.Column="1" Grid.Row="1" Content="10"/>
-                        <Button x:Name="MakMiddleRight" Margin="5" Padding="5" Grid.Column="2" Grid.Row="1" Content="10"/>
+                        
+                        <!-- Mask middle row -->
+                        <TextBox x:Name="MaskMiddleLeft" Margin="5" Padding="5" Grid.Column="0" Grid.Row="1" 
+                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskSide_KeyDown" LostFocus="MaskSide_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
+                        
+                        <TextBox x:Name="MaskCenter" Margin="5" Padding="5" Grid.Column="1" Grid.Row="1" 
+                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskCenter_KeyDown" PreviewTextInput="Mask_PreviewTextInput"/>
+                        
+                        <TextBox x:Name="MaskMiddleRight" Margin="5" Padding="5" Grid.Column="2" Grid.Row="1" 
+                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskSide_KeyDown" LostFocus="MaskSide_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
 
-                        <Button x:Name="MaskBottomLeft" Margin="5" Padding="5" Grid.Column="0" Grid.Row="2" Content="10"/>
-                        <Button x:Name="MaskBottomMiddle" Margin="5" Padding="5" Grid.Column="1" Grid.Row="2" Content="10"/>
-                        <Button x:Name="MaskBottomRight" Margin="5" Padding="5" Grid.Column="2" Grid.Row="2" Content="10"/>
+                        
+                        <!-- Mask bottom row -->
+                        <TextBox x:Name="MaskBottomLeft" Margin="5" Padding="5" Grid.Column="0" Grid.Row="2" 
+                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskCorner_KeyDown" LostFocus="MaskCorner_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
+                        
+                        <TextBox x:Name="MaskBottomMiddle" Margin="5" Padding="5" Grid.Column="1" Grid.Row="2" 
+                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskSide_KeyDown" LostFocus="MaskSide_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
+                        
+                        <TextBox x:Name="MaskBottomRight" Margin="5" Padding="5" Grid.Column="2" Grid.Row="2" 
+                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskCorner_KeyDown" LostFocus="MaskCorner_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
+                        
                     </Grid>
 
                 </StackPanel>
@@ -139,10 +170,10 @@
                         <!-- Dll selection radio buttons and start  -->
                         <StackPanel Grid.Column="1">
 
-                            <CheckBox x:Name="HighLevelCheckbox" Content="C++" FontWeight="Bold" FontSize="14" Margin="10 5"/>
-                            <CheckBox x:Name="AsmCheckbox" Content="ASM" FontWeight="Bold" FontSize="14" Margin="10 5"/>
+                            <CheckBox x:Name="HighLevelCheckbox" Checked="DllCheckbox_Checked" Content="C++" FontWeight="Bold" FontSize="14" Margin="10 5"/>
+                            <CheckBox x:Name="AsmCheckbox" Checked="DllCheckbox_Checked" Content="ASM" FontWeight="Bold" FontSize="14" Margin="10 5"/>
                             <CheckBox x:Name="TestCheckbox" Content="Test" FontWeight="Bold" FontSize="14" Margin="10 5"/>
-                            <Button x:Name="StartButton" Content="Run program" FontWeight="Bold" FontSize="14" Padding="3" Margin="10 5"/>
+                            <Button x:Name="StartButton" Click="StartButton_Click" Content="Run program" FontWeight="Bold" FontSize="14" Padding="3" Margin="10 5"/>
 
                         </StackPanel>
                         
