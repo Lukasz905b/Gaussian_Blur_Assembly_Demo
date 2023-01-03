@@ -31,7 +31,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Button x:Name="LoadImageButton" Margin="0 5"  Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" Content="Load image" FontWeight="Bold" FontSize="14" Padding="3"/>
+                <Button x:Name="LoadImageButton" Margin="0 5"  Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" Content="Load image" FontWeight="Bold" FontSize="14" Padding="3" Click="LoadImageButton_Click"/>
 
                 <TextBlock Text="Loaded image" Margin="0 5" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Column="0" Grid.Row="1"/>
                 <TextBlock Text="Converted image" Margin="0 5" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Column="1" Grid.Row="1"/>
@@ -87,43 +87,43 @@
                         
                         <!-- Mask top row -->
                         <TextBox x:Name="MaskTopLeft" Margin="5" Padding="5" Grid.Column="0" Grid.Row="0" 
-                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   Text="1" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
                                    KeyDown="MaskCorner_KeyDown" LostFocus="MaskCorner_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
                         
                         <TextBox x:Name="MaskTopMiddle" Margin="5" Padding="5" Grid.Column="1" Grid.Row="0" 
-                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   Text="1" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
                                    KeyDown="MaskSide_KeyDown" LostFocus="MaskSide_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
                         
                         <TextBox x:Name="MaskTopRight" Margin="5" Padding="5" Grid.Column="2" Grid.Row="0" 
-                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   Text="1" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
                                    KeyDown="MaskCorner_KeyDown" LostFocus="MaskCorner_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
 
                         
                         <!-- Mask middle row -->
                         <TextBox x:Name="MaskMiddleLeft" Margin="5" Padding="5" Grid.Column="0" Grid.Row="1" 
-                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   Text="1" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
                                    KeyDown="MaskSide_KeyDown" LostFocus="MaskSide_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
                         
                         <TextBox x:Name="MaskCenter" Margin="5" Padding="5" Grid.Column="1" Grid.Row="1" 
-                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
-                                   KeyDown="MaskCenter_KeyDown" PreviewTextInput="Mask_PreviewTextInput"/>
+                                   Text="1" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   KeyDown="MaskCenter_KeyDown" LostFocus="MaskCenter_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
                         
                         <TextBox x:Name="MaskMiddleRight" Margin="5" Padding="5" Grid.Column="2" Grid.Row="1" 
-                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   Text="1" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
                                    KeyDown="MaskSide_KeyDown" LostFocus="MaskSide_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
 
                         
                         <!-- Mask bottom row -->
                         <TextBox x:Name="MaskBottomLeft" Margin="5" Padding="5" Grid.Column="0" Grid.Row="2" 
-                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   Text="1" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
                                    KeyDown="MaskCorner_KeyDown" LostFocus="MaskCorner_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
                         
                         <TextBox x:Name="MaskBottomMiddle" Margin="5" Padding="5" Grid.Column="1" Grid.Row="2" 
-                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   Text="1" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
                                    KeyDown="MaskSide_KeyDown" LostFocus="MaskSide_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
                         
                         <TextBox x:Name="MaskBottomRight" Margin="5" Padding="5" Grid.Column="2" Grid.Row="2" 
-                                   Text="10" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
+                                   Text="1" TextAlignment="Center" FontWeight="Bold" FontSize="14" IsEnabled="True"
                                    KeyDown="MaskCorner_KeyDown" LostFocus="MaskCorner_LostFocus" PreviewTextInput="Mask_PreviewTextInput"/>
                         
                     </Grid>
