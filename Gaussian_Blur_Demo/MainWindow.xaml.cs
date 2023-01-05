@@ -5,7 +5,8 @@ using Microsoft.Win32;
 using System.IO;
 using System.Windows.Media.Imaging;
 using System.Runtime.InteropServices;
-using System.Windows.Media;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Gaussian_Blur_Demo
 {
@@ -18,6 +19,10 @@ namespace Gaussian_Blur_Demo
         // Import of the C++ Gaussian Blur function
         [DllImport(@"..\\..\\..\\Libs\\Gaussian_Blur_Lib.dll")]
         private static extern void blur_image(byte[] image, byte[] result, byte[] mask, int mask_sum, int width, int height);
+
+        // Import of the Assembly Gaussian Blur function
+        [DllImport(@"..\\..\\..\\Libs\\Gaussian_Blur_Lib_Asm.dll")]
+        private static extern void BlurImageAsm(byte[] image, byte[] result, byte[] mask, int mask_sum, int width, int height);
 
         // Regex used to detect number symbols
         private static readonly Regex numberRegex = new Regex("[^0-9]+");
@@ -63,10 +68,10 @@ namespace Gaussian_Blur_Demo
                 return;
             }
 
-            // If the current value of the selected TextBox is larger than 255 set it to 255
-            if (System.Convert.ToInt32(((TextBox)sender).Text) > 255)
+            // If the current value of the selected TextBox is larger than 64 set it to 64
+            if (System.Convert.ToInt32(((TextBox)sender).Text) > 64)
             {
-                ((TextBox)sender).Text = "255";
+                ((TextBox)sender).Text = "64";
                 return;
             }
 
@@ -78,133 +83,104 @@ namespace Gaussian_Blur_Demo
         }
 
         /**
-         * Removes the alpha channel from given array of pixels
-         */
-        private byte[] RemoveAlphaChannel(byte[] RGBAPixels)
-        {
-            // Calculate the length of the array after the removal of the alpha channel
-            int RGBPixelsLength = (RGBAPixels.Length / 4) * 3;
-
-            // Create a new array of the correct size
-            byte[] RGBPixels = new byte[RGBPixelsLength];
-
-            // Iterate over the original array
-            for(int i = 0, j = 0; i < RGBAPixels.Length; i++)
-            {
-                // Copy values to the new array, ignoring alpha channel values
-                if ((i + 1) % 4 == 0)
-                {
-                    continue;
-                }
-                RGBPixels[j] = RGBAPixels[i];
-                j++;
-            }
-            return RGBPixels;
-        }
-
-        /**
-         * Adds the alpha channel to a given array of pixels
-         */
-        private byte[] AddAlphaChannel(byte[] RGBPixels)
-        {
-            // Calculate the length of the array after the addition of the alpha channel
-            int RGBAPixelsLength = (RGBPixels.Length / 3) * 4;
-
-            // Create a new array of the correct size
-            byte[] RGBAPixels = new byte[RGBAPixelsLength];
-
-            // Iterate over the original array
-            for(int i = 0, j = 0; i < RGBAPixels.Length; i++)
-            {
-                // Copy values to the new array, adding an additional alpha channel value every four iterations
-                if ((i + 1) % 4 == 0)
-                {
-                    RGBAPixels[i] = 255;
-                }
-                else
-                {
-                    RGBAPixels[i] = RGBPixels[j];
-                    j++;
-                }
-            }
-
-            return RGBAPixels;
-        }
-
-        /**
          * Adds a one pixel wide gray border around the image
          */
         private byte[] AddImagePadding(byte[] image, int width, int height)
         {
             // Calculate the size of the image after padding
-            int paddedImageLength = image.Length + (3 * 2 * width) + (3 * 2 * height) + 12;
+            int paddedImageLength = image.Length + (4 * 2 * width) + (4 * 2 * height) + 16;
             int paddedWidth = width + 2; // Padded width in pixels
 
             // Create a new array of the correct size
             byte[] paddedImage = new byte[paddedImageLength];
 
             // Create the top of the padding border
-            for (int i = 0; i < paddedWidth * 3; i += 3)
+            for (int i = 0; i < paddedWidth * 4; i += 4)
             {
                 // Create one gray pixel
                 paddedImage[i] = 128;
                 paddedImage[i + 1] = 128;
                 paddedImage[i + 2] = 128;
+                paddedImage[i + 3] = 255;
             }
 
             // Copy original image and add side padding border
-            for (int i = paddedWidth * 3, j = 0; i < paddedImage.Length - (paddedWidth * 3); i += 3)
+            for (int i = paddedWidth * 4, j = 0; i < paddedImage.Length - (paddedWidth * 4); i += 4)
             {
-                if (i % (paddedWidth * 3) == 0 || i % (paddedWidth * 3) == ((paddedWidth - 1) * 3))
+                if (i % (paddedWidth * 4) == 0 || i % (paddedWidth * 4) == ((paddedWidth - 1) * 4))
                 {
+                    // One side padding gray pixel
                     paddedImage[i] = 128;
                     paddedImage[i + 1] = 128;
                     paddedImage[i + 2] = 128;
+                    paddedImage[i + 3] = 255;
                     continue;
                 }
+
+                // Copy one pixel from original image
                 paddedImage[i] = image[j];
                 paddedImage[i + 1] = image[j + 1];
                 paddedImage[i + 2] = image[j + 2];
-                j += 3;
+                paddedImage[i + 3] = image[j + 3];
+                j += 4;
             }
 
             // Create the bottom of the padding border
-            for (int i = paddedImage.Length - (paddedWidth * 3); i < paddedImage.Length; i += 3)
+            for (int i = paddedImage.Length - (paddedWidth * 4); i < paddedImage.Length; i += 4)
             {
                 // Create one gray pixel
                 paddedImage[i] = 128;
                 paddedImage[i + 1] = 128;
                 paddedImage[i + 2] = 128;
+                paddedImage[i + 3] = 255;
             }
 
             return paddedImage;
         }
 
-        /**
-         * Removes a one pixel wide border around the image
-         */
-        private byte[] RemoveImagePadding(byte[] image, int paddedWidth, int paddedHeight)
+        private byte[][] SplitImageForThreads(byte[] image, int width, int height, int threadCount)
         {
-            // Calculate the size of the image after removing padding
-            int unpaddedImageLenght = image.Length - (3 * 2 * paddedWidth) - (3 * 2 * paddedHeight);
+            // Padded width of the image in bytes
+            int widthBytes = (width + 2) * 4;
 
-            // Create a new array of the correct size
-            byte[] unpaddedImage = new byte[unpaddedImageLenght];
+            // Create an array that will store the height of the image passed to each thread
+            int[] splitImageHeights = new int[threadCount];
 
-            // Copy image while ignoring borders
-            for (int i = paddedWidth * 3, j = 0; i < image.Length - (paddedWidth * 3); i += 3)
+            // Equalize size of images in each thread, so the difference in size is at most equal to one row
+            for(int i = 0; i < (height % threadCount); i++)
             {
-                if (i % (paddedWidth * 3) == 0 || i % (paddedWidth * 3) == ((paddedWidth - 1) * 3))
-                {
-                    continue;
-                }
-                unpaddedImage[j] = image[i];
-                unpaddedImage[j + 1] = image[i + 1];
-                unpaddedImage[j + 2] = image[i + 2];
-                j += 3;
+                splitImageHeights[i] = (height / threadCount) + 1;
+            }
+            for(int i = (height % threadCount); i < splitImageHeights.Length; i++)
+            {
+                splitImageHeights[i] = (height / threadCount);
             }
 
-            return unpaddedImage;
+            // Create an image array for each thread
+            byte[][] splitImage = new byte[threadCount][];
+
+            // Split image for each thread
+            for(int i = 0; i < threadCount; i++)
+            {
+                // Calculate the length of the split image and starting index of the image part
+                int length = splitImageHeights[i] * widthBytes + 2 * widthBytes;
+
+                // Calculate the index from which copying should start
+                int startingIndex = 0;
+                for(int j = 0; j < i; j++)
+                {
+                    startingIndex += splitImage[j].Length;
+                }
+                startingIndex = startingIndex - i * 2 * widthBytes;
+
+                // Create an array of the correct size
+                splitImage[i] = new byte[length];
+
+                // Copy part of original image into array
+                System.Array.Copy(image, startingIndex, splitImage[i], 0, length);
+            }
+
+            return splitImage;
         }
 
         #endregion
@@ -296,21 +272,11 @@ namespace Gaussian_Blur_Demo
             // Convert bitmapImage to an array of pixel values
             initialImage.CopyPixels(initialImageArray, stride, 0);
 
-            // Remove the alpha channel from the array of pixel values
-            initialImageArray = RemoveAlphaChannel(initialImageArray);
-
             // Create an array for the blurred image
             byte[] blurredImageArray = new byte[initialImageArray.Length];
 
-            /////////////////////////////////////////////////////////////////////
-            // Temporary for testing ////////////////////////////////////////////
-            //initialImageArray.CopyTo(blurredImageArray, 0);
-            /////////////////////////////////////////////////////////////////////
-
             // Add image padding
             initialImageArray = AddImagePadding(initialImageArray, width, height);
-
-            //TODO: Implement image splitting for multithreading
 
             // Save mask values to an array
             byte[] mask = new byte[9];
@@ -333,20 +299,99 @@ namespace Gaussian_Blur_Demo
 
             #endregion
 
-            // Run the C++ library function
-            if ((bool)HighLevelCheckbox.IsChecked)
+            #region Split data for multithreading
+
+            // Get current selected thread count
+            int threadCount = System.Convert.ToInt32(ThreadCountText.Text);
+
+            // Create tasks
+            Task[] tasks = new Task[threadCount];
+
+            // Split image for each task
+            byte[][] initialImageSplitArrays = SplitImageForThreads(initialImageArray, width, height, threadCount);
+
+            // Create a result array for each task
+            byte[][] blurredImageSplitArrays = new byte[threadCount][];
+
+            // Create an array to save image height for each task
+            int[] threadImageHeight = new int[threadCount];
+
+            // Set the array for each task to the correct size and save height for each task
+            for (int i = 0; i < (height % threadCount); i++)
             {
-                blur_image(initialImageArray, blurredImageArray, mask, maskWeightSum, width, height);
+                threadImageHeight[i] = (height / threadCount) + 1;
+                blurredImageSplitArrays[i] = new byte[threadImageHeight[i] * width * 4];
+            }
+            for(int i = (height % threadCount); i < threadCount; i++)
+            {
+                threadImageHeight[i] = (height / threadCount);
+                blurredImageSplitArrays[i] = new byte[threadImageHeight[i] * width * 4];
             }
 
-            // Run the Assembly function
+            #endregion
+
+            #region Function execution
+
+            // Stopwatch used to measure execution time
+            Stopwatch stopwatch = new Stopwatch();
+
+            // Run the C++ function
+            if((bool)HighLevelCheckbox.IsChecked)
+            {
+                // Start the stopwatch
+                stopwatch.Start();
+
+                // Start all threads for C++ function
+                for (int i = 0; i < threadCount; i++)
+                {
+                    // This stops out of bound exceptions
+                    int y = i;
+
+                    tasks[y] = Task.Factory.StartNew(() => blur_image(initialImageSplitArrays[y], blurredImageSplitArrays[y], mask, maskWeightSum, width, threadImageHeight[y]));
+                }
+
+                // Wait until all tasks are done
+                Task.WaitAll(tasks);
+
+                // Stop measuring time and display result
+                stopwatch.Stop();
+                ExecutionTimeText.Text = "" + stopwatch.ElapsedMilliseconds + " ms";
+            }
+
+            //Run the Assembly function
             else if ((bool)AsmCheckbox.IsChecked)
             {
+                // Start the stopwatch
+                stopwatch.Start();
 
+                // Start all threads for assembly function
+                for (int i = 0; i < threadCount; i++)
+                {
+                    // This stops out of bound exceptions
+                    int y = i;
+
+                    tasks[y] = Task.Factory.StartNew(() => BlurImageAsm(initialImageSplitArrays[y], blurredImageSplitArrays[y], mask, maskWeightSum, width, threadImageHeight[y]));
+                }
+
+                // Wait until all tasks are done
+                Task.WaitAll(tasks);
+
+                // Stop measuring time and display result
+                stopwatch.Stop();
+                ExecutionTimeText.Text = "" + stopwatch.ElapsedMilliseconds + " ms";
             }
 
-            // Add the alpha channel back to the blurred image
-            blurredImageArray = AddAlphaChannel(blurredImageArray);
+            #endregion
+
+            #region Display and save result
+
+            int currentIndex = 0;
+            // Join all parts of the blurred image
+            for (int i = 0; i < threadCount; i++)
+            {
+                System.Array.Copy(blurredImageSplitArrays[i], 0, blurredImageArray, currentIndex, blurredImageSplitArrays[i].Length);
+                currentIndex += blurredImageSplitArrays[i].Length;
+            }
 
             // Paste the contents of the blurredImageArray onto a WriteableBitmap
             WriteableBitmap blurredImageWriteable = new WriteableBitmap(width, height, initialImage.DpiX, initialImage.DpiY, initialImage.Format, initialImage.Palette);
@@ -386,6 +431,8 @@ namespace Gaussian_Blur_Demo
             {
                 blurredImageEncoder.Save(fileStream);
             }
+            #endregion
+
         }
 
         #endregion
@@ -519,6 +566,7 @@ namespace Gaussian_Blur_Demo
 
                 // Set the new bitmapImage as source of the UnblurredImage to be displayed
                 UnblurredImage.Source = bitmapImage;
+                BlurredImage.Source = null;
             }
         }
 
