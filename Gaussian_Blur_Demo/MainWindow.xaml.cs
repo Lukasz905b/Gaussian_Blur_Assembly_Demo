@@ -207,9 +207,9 @@ namespace Gaussian_Blur_Demo
 
             for (int i = 0; i < 64; i++)
             {
-                for (int j = 0; j < 15; j++)
+                for (int j = 0; j < 20; j++)
                 {
-                    excelWorksheet.Cells[(i + 1), (j + 1)] = executionTimes[j + (i * 15)];
+                    excelWorksheet.Cells[(i + 1), (j + 1)] = executionTimes[j + (i * 20)];
                 }
             }
 
@@ -476,29 +476,104 @@ namespace Gaussian_Blur_Demo
 
             #region Run test
 
-            string executionTimeString = ExecutionTimeText.Text;
-            string[] executionTimeStringSplit = executionTimeString.Split(" ");
-            int executionTimeMiliseconds = System.Convert.ToInt32(executionTimeStringSplit[0]);
-
             if((bool)TestCheckbox.IsChecked)
             {
+                int executionTimeMiliseconds;
                 executionTimes.Clear();
-                TestCheckbox.IsChecked = false;
-                TestCheckbox.IsEnabled = false;
-                for(int i = 1; i <= 64; i++)
+                for(int k = 1; k <= 64; k++)
                 {
-                    ThreadCountSlider.Value = i;
-                    for (int j = 0; j < 15; j++)
+                    ThreadCountSlider.Value = k;
+                    for (int j = 0; j < 20; j++)
                     {
-                        StartButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        #region Split data for multithreading
+
+                        // Get current selected thread count
+                        threadCount = System.Convert.ToInt32(ThreadCountText.Text);
+
+                        // Create tasks
+                        tasks = new Task[threadCount];
+
+                        // Split image for each task
+                        initialImageSplitArrays = SplitImageForThreads(initialImageArray, width, height, threadCount);
+
+                        // Create a result array for each task
+                        blurredImageSplitArrays = new byte[threadCount][];
+
+                        // Create an array to save image height for each task
+                        threadImageHeight = new int[threadCount];
+
+                        // Set the array for each task to the correct size and save height for each task
+                        for (int i = 0; i < (height % threadCount); i++)
+                        {
+                            threadImageHeight[i] = (height / threadCount) + 1;
+                            blurredImageSplitArrays[i] = new byte[threadImageHeight[i] * width * 4];
+                        }
+                        for (int i = (height % threadCount); i < threadCount; i++)
+                        {
+                            threadImageHeight[i] = (height / threadCount);
+                            blurredImageSplitArrays[i] = new byte[threadImageHeight[i] * width * 4];
+                        }
+
+                        #endregion
+
+                        #region Test function
+                        // Stopwatch used to measure execution time
+                        Stopwatch testStopwatch = new Stopwatch();
+
+                        // Run the C++ function
+                        if ((bool)HighLevelCheckbox.IsChecked)
+                        {
+                            // Start the stopwatch
+                            testStopwatch.Start();
+
+                            // Start all threads for C++ function
+                            for (int i = 0; i < threadCount; i++)
+                            {
+                                // This stops out of bound exceptions
+                                int y = i;
+
+                                tasks[y] = Task.Factory.StartNew(() => blur_image(initialImageSplitArrays[y], blurredImageSplitArrays[y], mask, maskWeightSum, width, threadImageHeight[y]));
+                            }
+
+                            // Wait until all tasks are done
+                            Task.WaitAll(tasks);
+
+                            // Stop measuring time and display result
+                            testStopwatch.Stop();
+                            executionTimeMiliseconds = (int)testStopwatch.ElapsedMilliseconds;
+                            executionTimes.Add(executionTimeMiliseconds);
+                        }
+
+                        //Run the Assembly function
+                        else if ((bool)AsmCheckbox.IsChecked)
+                        {
+                            // Start the stopwatch
+                            testStopwatch.Start();
+
+                            // Start all threads for assembly function
+                            for (int i = 0; i < threadCount; i++)
+                            {
+                                // This stops out of bound exceptions
+                                int y = i;
+
+                                tasks[y] = Task.Factory.StartNew(() => BlurImageAsm(initialImageSplitArrays[y], blurredImageSplitArrays[y], mask, maskWeightSum, width, threadImageHeight[y]));
+                            }
+
+                            // Wait until all tasks are done
+                            Task.WaitAll(tasks);
+
+                            // Stop measuring time and display result
+                            testStopwatch.Stop();
+                            executionTimeMiliseconds = (int)testStopwatch.ElapsedMilliseconds;
+                            executionTimes.Add(executionTimeMiliseconds);
+                        }
+                        #endregion
+
                     }
                 }
-                TestCheckbox.IsEnabled = true;
-                TestCheckbox.IsChecked = true;
                 PrintToExcel();
             }
 
-            executionTimes.Add(executionTimeMiliseconds);
 
             #endregion
 
