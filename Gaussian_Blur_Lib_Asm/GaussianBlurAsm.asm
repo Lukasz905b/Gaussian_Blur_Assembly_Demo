@@ -90,11 +90,12 @@ MOV AL, BYTE PTR [R12 + 4]; load one top middle pixel color value to AL
 SHL RAX, 8; shift RAX to the left to load in more pixel colors
 
 MOV AL, BYTE PTR [R12]; Load one top left pixel color value to AL
-MOV [RSP], RAX; move 8 pixel values to the stack
+MOVQ XMM1, RAX; move 8 pixel values to the stack
 
 XOR RAX, RAX; empty the RAX register
 MOV AL, BYTE PTR [R12 + 2*R10 + 8]; load one bottom right pixel color value to AL
-MOV [RSP + 8], RAX; load last pixel color to the stack
+MOVQ XMM3, RAX; load last pixel color to the stack
+MOVLHPS XMM1, XMM3
 
 ; restore image address back to the original value
 ADD R12, R10; add image width back to image address
@@ -102,23 +103,26 @@ ADD R12, 4; add pixel size back to image address
 SUB R12, R14; subtract current i value from image address
 
 ; multiply color values with corresponing mask weights
-MOVDQU XMM1, XMMWORD PTR [RSP]; load pixel color values to XMM1
+;MOVDQU XMM1, XMMWORD PTR [RSP]; load pixel color values to XMM1
 PMADDUBSW XMM1, XMM0; multiply each color value with the corresponding mask weight
 
 ; add results
-MOVDQU XMMWORD PTR [RSP], XMM1; move results back to the stack
-XOR RAX, RAX; empty the RAX register which will be used to store the sum
-XOR RCX, RCX; empty the RCX register which will be used to store values to add to the sum
-MOV CX, WORD PTR [RSP]; move first value to CX
-ADD EAX, ECX; add CX to the sum
-MOV CX, WORD PTR [RSP + 2]; move second value to CX
-ADD EAX, ECX; add CX to the sum
-MOV CX, WORD PTR [RSP + 4]; move third value to CX
-ADD EAX, ECX; add CX to the sum
-MOV CX, WORD PTR [RSP + 6]; move fourth value to CX
-ADD EAX, ECX; add CX to the sum
-MOV CX, WORD PTR [RSP + 8]; move fifth value to CX
-ADD EAX, ECX; add CX to the sum
+XOR RAX, RAX; empty the RAX register
+XOR RDX, RDX; empty the RDX register
+MOVQ RCX, XMM1; move first four result values to RCX
+MOVHLPS XMM3, XMM1; move last result value to low part of XMM2
+MOVQ RAX, XMM3; move last result value to RAX
+MOV DX, CX; move first value to DX
+ADD EAX, EDX; add first value to sum
+SHR RCX, 16; move second value to CX
+MOV DX, CX; move second value to DX
+ADD EAX, EDX; add second value to sum
+SHR RCX, 16; move third value to CX
+MOV DX, CX; move third value to DX
+ADD EAX, EDX; add third value to sum
+SHR RCX, 16; move fourth value to CX
+MOV DX, CX; move fourth value to DX
+ADD EAX, EDX; add fourth value to sum
 
 ; divide results by sum of mask values rounding down
 CVTSI2SS XMM3, EAX; move sum to XMM3 for division

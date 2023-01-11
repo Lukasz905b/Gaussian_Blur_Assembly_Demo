@@ -207,9 +207,9 @@ namespace Gaussian_Blur_Demo
 
             for (int i = 0; i < 64; i++)
             {
-                for (int j = 0; j < 1; j++)
+                for (int j = 0; j < 15; j++)
                 {
-                    excelWorksheet.Cells[(i + 1), (j + 1)] = executionTimes[j + (i * 1)];
+                    excelWorksheet.Cells[(i + 1), (j + 1)] = executionTimes[j + (i * 15)];
                 }
             }
 
@@ -488,7 +488,7 @@ namespace Gaussian_Blur_Demo
                 for(int i = 1; i <= 64; i++)
                 {
                     ThreadCountSlider.Value = i;
-                    for (int j = 0; j < 1; j++)
+                    for (int j = 0; j < 15; j++)
                     {
                         StartButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                     }
