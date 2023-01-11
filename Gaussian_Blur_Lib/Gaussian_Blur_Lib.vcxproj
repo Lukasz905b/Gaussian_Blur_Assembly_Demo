@@ -152,6 +152,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "$(OutDir)Gaussian_Blur_lib.dll" "$(SolutionDir)Gaussian_Blur_Demo\bin\Libs"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />

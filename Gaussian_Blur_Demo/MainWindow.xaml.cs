@@ -5,15 +5,21 @@ using Microsoft.Win32;
 using System.IO;
 using System.Windows.Media.Imaging;
 using System.Runtime.InteropServices;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.Office.Interop.Excel;
+
+using Button = System.Windows.Controls.Button;
+using TextBox = System.Windows.Controls.TextBox;
 
 namespace Gaussian_Blur_Demo
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public unsafe partial class MainWindow : Window
+    public partial class MainWindow : System.Windows.Window
     {
 
         // Import of the C++ Gaussian Blur function
@@ -29,11 +35,19 @@ namespace Gaussian_Blur_Demo
 
         // Variable used to store the path to the currently selected image
         private string imagePath;
-        
+
+        // A list used to store execution times when running a test
+        private List<int> executionTimes;
+
+        // Test counter
+        private int testCounter;
+
 
         public MainWindow()
         {
             InitializeComponent();
+            testCounter = 1;
+            executionTimes = new List<int>();
         }
 
         #region Helper methods
@@ -76,7 +90,7 @@ namespace Gaussian_Blur_Demo
             }
 
             // If the current value of the selected TextBox is equal to 0 set it to 1
-            if (System.Convert.ToInt32(((TextBox)sender).Text) == 0)
+            if (System.Convert.ToInt32(((System.Windows.Controls.TextBox)sender).Text) == 0)
             {
                 ((TextBox)sender).Text = "1";
             }
@@ -181,6 +195,33 @@ namespace Gaussian_Blur_Demo
             }
 
             return splitImage;
+        }
+
+        private void PrintToExcel()
+        {
+            Microsoft.Office.Interop.Excel.Application excelApp = new Microsoft.Office.Interop.Excel.Application();
+            excelApp.Visible = true;
+
+            _Workbook excelWorkbook = (_Workbook)(excelApp.Workbooks.Add(""));
+            _Worksheet excelWorksheet = (_Worksheet)excelWorkbook.ActiveSheet;
+
+            for (int i = 0; i < 64; i++)
+            {
+                for (int j = 0; j < 1; j++)
+                {
+                    excelWorksheet.Cells[(i + 1), (j + 1)] = executionTimes[j + (i * 1)];
+                }
+            }
+
+            excelApp.Visible = false;
+            excelApp.UserControl = false;
+            string path = Path.GetDirectoryName(imagePath) + "\\test_" + testCounter + ".xlsx";
+            testCounter++;
+            excelWorkbook.SaveAs(path, XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing,
+                      false, false, XlSaveAsAccessMode.xlNoChange,
+                      Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+            excelWorkbook.Close();
+            excelApp.Quit();
         }
 
         #endregion
@@ -431,6 +472,34 @@ namespace Gaussian_Blur_Demo
             {
                 blurredImageEncoder.Save(fileStream);
             }
+            #endregion
+
+            #region Run test
+
+            string executionTimeString = ExecutionTimeText.Text;
+            string[] executionTimeStringSplit = executionTimeString.Split(" ");
+            int executionTimeMiliseconds = System.Convert.ToInt32(executionTimeStringSplit[0]);
+
+            if((bool)TestCheckbox.IsChecked)
+            {
+                executionTimes.Clear();
+                TestCheckbox.IsChecked = false;
+                TestCheckbox.IsEnabled = false;
+                for(int i = 1; i <= 64; i++)
+                {
+                    ThreadCountSlider.Value = i;
+                    for (int j = 0; j < 1; j++)
+                    {
+                        StartButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    }
+                }
+                TestCheckbox.IsEnabled = true;
+                TestCheckbox.IsChecked = true;
+                PrintToExcel();
+            }
+
+            executionTimes.Add(executionTimeMiliseconds);
+
             #endregion
 
         }

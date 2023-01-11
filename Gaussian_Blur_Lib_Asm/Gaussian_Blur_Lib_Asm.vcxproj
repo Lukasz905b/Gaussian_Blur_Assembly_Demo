@@ -160,7 +160,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <NoEntryPoint>true</NoEntryPoint>
+      <ModuleDefinitionFile>GaussianBlurAsm.def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "$(OutDir)Gaussian_Blur_Lib_Asm.dll" "$(SolutionDir)Gaussian_Blur_Demo\bin\Libs"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
